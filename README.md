@@ -10,8 +10,55 @@ akuntansi, sekaligus mampu membangun sendiri alat otomasinya.
 
 ## Status
 
-Tahap: **bootstrap** — folder dan PRD sudah ada, kode belum ditulis.
-Rencana tahapan ada di `PROGRESS.md`, urutannya mengikuti PRD §12.
+Tahap: **kerangka selesai (Tahap 1)** — seluruh halaman bisa dibuka di
+`npm run dev`, isi masih **contoh (dummy)** sampai data asli disiapkan.
+Rincian dan hasil uji ada di [`PROGRESS.md`](./PROGRESS.md).
+
+## Menjalankan di komputer
+
+```bash
+npm install
+npm run dev      # buka alamat yang muncul di terminal
+```
+
+Perintah lain yang sering dipakai:
+
+```bash
+npm run build    # membuat berkas siap unggah di folder dist/
+npm run preview  # melihat hasil build
+npm run lint     # memeriksa kesalahan penulisan kode
+```
+
+## Di mana saya mengubah isi situs?
+
+Hampir semua isi ada di `src/data/` — bukan di dalam kode tampilan:
+
+| Berkas | Isinya |
+|---|---|
+| `src/data/profil.js` | nama, posisi, kalimat nilai jual, paragraf Tentang Saya, foto, CV |
+| `src/data/kontak.js` | nomor WhatsApp, email, LinkedIn |
+| `src/data/layanan.js` | tiga kartu layanan + pesan WhatsApp tiap layanan |
+| `src/data/proyek.js` | proyek unggulan (masalah/solusi/fitur/hasil) + proyek pendukung |
+| `src/data/pengalaman.js` | pengalaman kerja, pendidikan, sertifikasi, keahlian |
+| `src/data/teks.js` | label tombol dan judul bagian, serta penanda `MODE_DUMMY` |
+
+Foto, CV, dan video diletakkan di `public/media/`, lalu path-nya ditulis di
+berkas data (contoh: `'/media/foto-profil.webp'`). Selama berkasnya belum ada,
+situs menampilkan kotak penanda yang rapi — tata letak tidak rusak.
+
+> **Penting sebelum publikasi:** ubah `MODE_DUMMY` di `src/data/teks.js` menjadi
+> `false` supaya tautan dan angka contoh tidak tampil (PRD §10 dan §11).
+
+## Memeriksa tampilan
+
+```bash
+npm run dev -- --host 127.0.0.1 --port 5175     # terminal 1
+node scripts/dev/audit_ui.mjs http://127.0.0.1:5175/   # terminal 2
+```
+
+Pemeriksa itu menguji HP (390 px), tablet (834 px), dan desktop (1440 px):
+gulir mendatar, jumlah `<h1>`, `alt` gambar, nama tombol, target sentuh ≥ 44 px,
+kelengkapan meta SEO, dan memastikan semua bagian tampil penuh.
 
 ## Stack
 

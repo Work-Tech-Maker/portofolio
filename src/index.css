@@ -1,0 +1,145 @@
+@import "tailwindcss";
+
+/* =============================================================================
+   TOKEN DESAIN — sumber kebenaran: DESIGN.md
+   Semua warna, radius, bayangan, dan skala huruf didaftarkan di sini.
+   Komponen WAJIB memakai kelas token (bg-terang-surface, text-gelap-ink-2, …),
+   bukan menulis kode warna langsung. Untuk mengganti tema, cukup ubah nilai di
+   blok @theme ini — tidak perlu menyentuh komponen.
+   ========================================================================== */
+@theme {
+  /* ---------- Zona terang: Akuntansi & Pajak ---------- */
+  --color-terang-bg: #f7f9fc;
+  --color-terang-surface: #ffffff;
+  --color-terang-surface-2: #eef2f8;
+  --color-terang-border: #dce3ee;
+  --color-terang-border-kuat: #c3cedf;
+  --color-terang-ink: #0b1b33;
+  --color-terang-ink-2: #41546e;
+  --color-terang-ink-3: #64748b; /* 4.76:1 di atas latar terang (AA) */
+
+  /* ---------- Zona gelap: IT, otomasi, demo ---------- */
+  --color-gelap-bg: #0a1f38;
+  --color-gelap-surface: #0f2c4d;
+  --color-gelap-border: #1e4066;
+  --color-gelap-ink: #eaf1f9;
+  --color-gelap-ink-2: #a9bdd4;
+  --color-gelap-ink-3: #7b93ae;
+
+  /* ---------- Aksen (hanya dua: teal + emas) ---------- */
+  --color-teal: #0f766e;
+  --color-teal-terang: #14b8a6;
+  --color-teal-lembut: #e6f4f2;
+  --color-teal-tua: #0b5d57;
+  --color-emas: #b07c24;
+  --color-emas-tua: #8a6119; /* untuk teks kecil: kontras 5.3:1 */
+  --color-emas-terang: #e9b44c;
+
+  /* ---------- Huruf ---------- */
+  --font-judul: "Plus Jakarta Sans", "Inter", system-ui, sans-serif;
+  --font-isi: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  /* ---------- Skala huruf (mobile; desktop lewat kelas md:) ---------- */
+  --text-display: 40px;
+  --text-display--line-height: 44px;
+  --text-display--font-weight: 800;
+  --text-display--letter-spacing: -0.02em;
+  --text-h2: 30px;
+  --text-h2--line-height: 36px;
+  --text-h2--font-weight: 700;
+  --text-h2--letter-spacing: -0.01em;
+  --text-h3: 21px;
+  --text-h3--line-height: 28px;
+  --text-h3--font-weight: 700;
+  --text-body-lg: 17px;
+  --text-body-lg--line-height: 28px;
+  --text-body: 16px;
+  --text-body--line-height: 26px;
+  --text-label: 14px;
+  --text-label--line-height: 20px;
+  --text-label--font-weight: 600;
+  --text-micro: 13px;
+  --text-micro--line-height: 18px;
+
+  /* ---------- Radius ---------- */
+  --radius-chip: 8px;
+  --radius-tombol: 12px;
+  --radius-kartu: 16px;
+  --radius-media: 24px;
+
+  /* ---------- Bayangan (hanya zona terang) ---------- */
+  --shadow-kartu: 0 1px 2px rgb(11 27 51 / 0.05), 0 8px 24px -12px rgb(11 27 51 / 0.1);
+  --shadow-kartu-hover: 0 2px 4px rgb(11 27 51 / 0.06), 0 16px 32px -16px rgb(11 27 51 / 0.18);
+  --shadow-nav: 0 1px 0 rgb(11 27 51 / 0.06);
+
+  /* ---------- Kontainer ---------- */
+  --container-isi: 1120px;
+}
+
+/* ---------------------------------------------------------------------------
+   Dasar halaman
+   --------------------------------------------------------------------------- */
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
+/* Bila pengunjung memilih "kurangi animasi" di sistemnya, matikan gulir halus.
+   Animasi komponen ditangani framer-motion lewat useReducedMotion(). */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+body {
+  margin: 0;
+  background: var(--color-terang-bg);
+  color: var(--color-terang-ink);
+  font-family: var(--font-isi);
+  font-size: var(--text-body);
+  line-height: 26px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Judul memakai Plus Jakarta Sans */
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-judul);
+  margin: 0;
+}
+
+/* Angka rata kolom: dipakai kalkulator PPN & statistik */
+.tnum {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Fokus terlihat untuk pengguna keyboard (DESIGN.md §9) */
+:focus-visible {
+  outline: 2px solid var(--color-teal);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Zona gelap: fokus memakai teal terang supaya tetap terlihat */
+[data-zona="gelap"] :focus-visible {
+  outline-color: var(--color-teal-terang);
+}
+
+/* Gradasi perpindahan antar zona (DESIGN.md §2) */
+.zona-transisi {
+  height: 128px;
+}
+
+/* Hormati preferensi pengunjung: hilangkan transisi CSS apa pun */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}
