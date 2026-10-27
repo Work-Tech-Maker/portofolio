@@ -5,13 +5,16 @@
 # Semua bagian diberi komentar supaya mudah dimatikan bila bermasalah.
 # ---------------------------------------------------------------------------
 
-# 1. Paksa HTTPS. Matikan (beri tanda #) bila SSL subdomain belum aktif,
-#    kalau tidak situs akan gagal dibuka.
-<IfModule mod_rewrite.c>
-  RewriteEngine On
-  RewriteCond %{HTTPS} !=on
-  RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
-</IfModule>
+# 1. Paksa HTTPS.
+#    SENGAJA DINONAKTIFKAN untuk deploy pertama: bila sertifikat SSL subdomain
+#    belum terbit, pengunjung yang membuka http:// akan dilempar ke https:// yang
+#    belum siap sehingga situs terlihat mati. Aktifkan (hapus tanda # pada 4 baris
+#    di bawah) SETELAH https://<subdomain> terbukti bisa dibuka.
+# <IfModule mod_rewrite.c>
+#   RewriteEngine On
+#   RewriteCond %{HTTPS} !=on
+#   RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+# </IfModule>
 
 # 2. Halaman utama tidak di-cache lama, supaya perubahan langsung terlihat
 #    (nama berkas CSS/JS sudah mengandung kode unik, jadi aman di-cache lama).

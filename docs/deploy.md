@@ -39,11 +39,15 @@ Opsional, dipakai bila folder tujuan bukan `public_html/`:
 
 Alamat FTP Hostinger bisa masuk ke salah satu dari dua tempat:
 
-1. **Langsung ke folder domain** → login sudah berada di dalam `public_html`.
-   Isi `FTP_SERVER_DIR` dengan `public_html/` (atau biarkan kosong, karena itu default).
+1. **Langsung ke folder domain** → login sudah berada di dalam `public_html`,
+   jadi folder tujuannya `public_html/`.
 2. **Ke akar akun hosting** → login berada di `/home/<user>`.
-   Folder subdomain ada di `domains/<domain>/public_html/`, jadi isi:
+   Folder subdomain ada di `domains/<domain>/public_html/`, jadi folder tujuannya:
    `domains/indragunawan.luckywater.web.id/public_html/`
+
+Alur kerja memeriksa keduanya otomatis dan memakai yang ada. Bila ingin memaksa
+satu nilai, isi secret **`FTP_SERVER_DIR`**, atau isi kolom `server_dir` saat
+menjalankan workflow manual.
 
 Cara memastikan: buka File Manager hPanel, lihat path lengkap folder subdomain
 (biasanya ditampilkan di bagian atas berkas). Salin bagian setelah `/home/<user>/`.
@@ -52,17 +56,26 @@ Cara memastikan: buka File Manager hPanel, lihat path lengkap folder subdomain
 Membuat subdomain sekaligus membuat folder `public_html`-nya. Tanpa itu, unggahan
 akan gagal dengan pesan `550 No such directory`.
 
-## 3. Uji tanpa mengunggah (dry run) — lakukan ini pada percobaan pertama
+## 3. Uji tanpa mengunggah (dry run) — cara klik dari browser
 
-1. Buka tab **Actions** → pilih alur kerja **Deploy ke Hostinger (FTPS)**.
-2. Klik **Run workflow**, isi:
-   - `dry_run` = `true`
-   - `server_dir` = folder tujuan (lihat langkah 2), atau kosongkan
-3. Jalankan, lalu buka hasilnya. Bagian **Unggah ke Hostinger** akan menampilkan
-   daftar berkas yang *akan* dibuat/dihapus, tanpa mengubah apa pun di server.
+Alur kerja ini mencari folder tujuan **sendiri**: ia mencoba `domains/<domain>/public_html/`
+lalu `public_html/` lewat FTP, dan memilih yang benar-benar ada. Jadi pada umumnya
+tidak perlu mengisi apa pun.
 
-Bila daftarnya sudah benar (hanya `index.html`, `.htaccess`, `favicon.svg`,
-dan berkas di `assets/`), jalankan lagi dengan `dry_run` = `false`.
+1. Buka `https://github.com/Work-Tech-Maker/portofolio/actions`
+2. Di kiri, klik **Deploy ke Hostinger (FTPS)**.
+3. Klik tombol **Run workflow** (kanan atas) → pilih branch **main**.
+4. Isi `dry_run` = **true** (opsional: kolom `server_dir` bila ingin memaksa folder tertentu).
+5. Klik **Run workflow** berwarna hijau, tunggu sampai selesai, lalu klik baris hasilnya.
+6. Buka langkah **Unggah ke Hostinger**: akan tampil daftar berkas yang *akan*
+   dibuat/dihapus, tanpa mengubah apa pun di server.
+
+Bila daftarnya sudah benar (hanya `index.html`, `.htaccess`, `favicon.svg`, dan
+berkas di `assets/`), ulangi langkah di atas dengan `dry_run` = **false**.
+
+> Catatan: tombol **Run workflow** hanya muncul bila berkas alur kerja ini sudah ada
+> di **branch default** repo. Kalau belum muncul, ubah dulu branch default ke `main`
+> di **Settings → General → Default branch**.
 
 ## 4. Deploy normal
 

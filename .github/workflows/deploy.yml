@@ -66,6 +66,58 @@ jobs:
           fi
           echo "OK: hasil build lengkap dan bersih"
 
+      # Folder tujuan berbeda-beda antarpaket hosting:
+      #   - bila login FTP masuk ke akar akun  -> domains/<domain>/public_html/
+      #   - bila login FTP langsung ke domain   -> public_html/
+      # Langkah ini MEMERIKSA satu per satu lewat FTP (hanya membaca daftar folder,
+      # tidak menulis apa pun) lalu memilih yang benar-benar ada. Urutan prioritas:
+      # input manual > secret FTP_SERVER_DIR > hasil deteksi.
+      - name: Tentukan folder tujuan di hosting
+        id: tujuan
+        env:
+          HOST: ${{ secrets.FTP_SERVER }}
+          AKUN: ${{ secrets.FTP_USERNAME }}
+          SANDI: ${{ secrets.FTP_PASSWORD }}
+          DARI_INPUT: ${{ inputs.server_dir }}
+          DARI_SECRET: ${{ secrets.FTP_SERVER_DIR }}
+        run: |
+          set -uo pipefail
+
+          pilih() {
+            echo "server_dir=$1" >> "$GITHUB_OUTPUT"
+            echo "== Folder tujuan dipakai: $1 =="
+          }
+
+          if [ -n "${DARI_INPUT:-}" ]; then pilih "$DARI_INPUT"; exit 0; fi
+          if [ -n "${DARI_SECRET:-}" ]; then pilih "$DARI_SECRET"; exit 0; fi
+
+          if [ -z "${HOST:-}" ] || [ -z "${AKUN:-}" ] || [ -z "${SANDI:-}" ]; then
+            echo "::error::Secret FTP_SERVER / FTP_USERNAME / FTP_PASSWORD belum lengkap."
+            exit 1
+          fi
+
+          echo "== Isi akar FTP (untuk diagnosis) =="
+          curl -sS --connect-timeout 20 --ssl-reqd --ftp-pasv \
+            --user "$AKUN:$SANDI" --list-only "ftp://$HOST/" || true
+
+          KANDIDAT=(
+            "domains/indragunawan.luckywater.web.id/public_html/"
+            "public_html/"
+          )
+
+          for k in "${KANDIDAT[@]}"; do
+            if curl -sS --connect-timeout 20 --ssl-reqd --ftp-pasv \
+                 --user "$AKUN:$SANDI" --list-only "ftp://$HOST/$k" > /dev/null; then
+              echo "Ditemukan: $k"
+              pilih "$k"
+              exit 0
+            fi
+            echo "Tidak ditemukan: $k"
+          done
+
+          echo "::error::Folder tujuan tidak ditemukan otomatis. Jalankan workflow manual (Run workflow) dengan kolom server_dir diisi path dari File Manager hPanel. Lihat docs/deploy.md bagian 2."
+          exit 1
+
       # Yang diunggah HANYA isi dist/ (bukan seluruh repo). Tanpa local-dir,
       # yang terunggah adalah kode sumber dan situs tidak akan jalan.
       - name: Unggah ke Hostinger
@@ -77,10 +129,7 @@ jobs:
           protocol: ftps
           port: 21
           local-dir: ./dist/
-          # Default: public_html/ (dipakai bila FTP login langsung masuk ke folder domain).
-          # Untuk subdomain di Hostinger biasanya perlu: domains/<domain>/public_html/
-          # Ubah lewat secret FTP_SERVER_DIR atau input server_dir saat menjalankan manual.
-          server-dir: ${{ inputs.server_dir || secrets.FTP_SERVER_DIR || 'public_html/' }}
+          server-dir: ${{ steps.tujuan.outputs.server_dir }}
           dry-run: ${{ inputs.dry_run || 'false' }}
           log-level: standard
           timeout: 60000
