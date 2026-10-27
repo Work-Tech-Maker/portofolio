@@ -27,9 +27,12 @@ permissions:
   contents: read
 
 env:
-  # Dua kemungkinan struktur hosting Hostinger. Yang ada di server akan dipakai.
-  DIR_SUBDOMAIN: domains/indragunawan.luckywater.web.id/public_html/
-  DIR_PUBLIC: public_html/
+  # Folder tujuan bawaan = AKAR login FTP.
+  # Dibuktikan 27 Okt 2026 lewat pemeriksaan nyata: akun FTP ini sudah dibatasi
+  # ke folder subdomain (isi akarnya: default.php), sedangkan folder
+  # "public_html/" dan "domains/..." TIDAK ada di dalamnya. Menulis ke
+  # "domains/..." membuat folder bersarang dan situs tidak tampil di akar domain.
+  DIR_BAWAAN: ./
 
 jobs:
   deploy:
@@ -137,10 +140,11 @@ jobs:
           echo "Isi akar FTP: ${AKAR:-<kosong atau gagal dibaca>}"
           echo "::notice::Isi akar FTP: ${AKAR:-<kosong atau gagal dibaca>}"
 
-          for k in "${{ env.DIR_SUBDOMAIN }}" "${{ env.DIR_PUBLIC }}"; do
+          for k in "${{ env.DIR_BAWAAN }}" "$FOLDER_MANUAL"; do
+            [ -n "$k" ] || continue
             if ada "ftp://$H/$k"; then
               echo "ADA: $k   isi: $(daftar "ftp://$H/$k")"
-              echo "::notice::Folder ADA: $k"
+              echo "::notice::Folder ADA: $k | isi: $(daftar "ftp://$H/$k")"
             else
               echo "TIDAK ADA: $k"
               echo "::notice::Folder TIDAK ADA: $k"
@@ -160,24 +164,20 @@ jobs:
           fi
 
           if [ -n "$FOLDER_MANUAL" ]; then
-            echo "Folder manual    : '$FOLDER_MANUAL' (dipakai, jalur bawaan tidak dicoba)"
-            echo "folder_tersedia=true" >> "$GITHUB_OUTPUT"
-            echo "folder_manual=$FOLDER_MANUAL" >> "$GITHUB_OUTPUT"
+            echo "Folder tujuan    : '$FOLDER_MANUAL' (dari setelan manual)"
+            echo "folder_tujuan=$FOLDER_MANUAL" >> "$GITHUB_OUTPUT"
           else
-            echo "Folder manual    : tidak diisi, workflow mencoba dua jalur bawaan"
-            echo "folder_tersedia=false" >> "$GITHUB_OUTPUT"
+            echo "Folder tujuan    : '${{ env.DIR_BAWAAN }}' (akar login FTP, bawaan)"
+            echo "folder_tujuan=${{ env.DIR_BAWAAN }}" >> "$GITHUB_OUTPUT"
           fi
 
       # ---------------------------------------------------------------------
       # Unggah. Yang dikirim HANYA isi dist/ (bukan seluruh repo).
-      # Karena struktur folder bisa berbeda, ada dua jalur percobaan berurutan;
-      # kalau kolom server_dir (atau secret FTP_SERVER_DIR) diisi, hanya folder
-      # itu yang dipakai.
+      # Folder tujuan: akar login FTP (bawaan), kecuali diisi sendiri lewat
+      # kolom server_dir saat menjalankan manual atau secret FTP_SERVER_DIR.
       # ---------------------------------------------------------------------
-      - name: Unggah — jalur subdomain
-        id: unggah1
-        if: ${{ steps.periksa.outputs.folder_tersedia != 'true' }}
-        continue-on-error: true
+      - name: Unggah ke Hostinger
+        id: unggah
         uses: SamKirkland/FTP-Deploy-Action@v4.4.0
         with:
           server: ${{ steps.periksa.outputs.ftp_host }}
@@ -186,61 +186,26 @@ jobs:
           protocol: ftps
           port: 21
           local-dir: ./dist/
-          server-dir: ${{ env.DIR_SUBDOMAIN }}
+          server-dir: ${{ steps.periksa.outputs.folder_tujuan }}
           dry-run: ${{ inputs.dry_run || 'false' }}
           log-level: standard
           timeout: 60000
 
-      - name: Unggah — jalur public_html
-        id: unggah2
-        if: ${{ always() && steps.periksa.outputs.folder_tersedia != 'true' && steps.unggah1.outcome == 'failure' }}
-        continue-on-error: true
-        uses: SamKirkland/FTP-Deploy-Action@v4.4.0
-        with:
-          server: ${{ steps.periksa.outputs.ftp_host }}
-          username: ${{ secrets.FTP_USERNAME || vars.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD || vars.FTP_PASSWORD }}
-          protocol: ftps
-          port: 21
-          local-dir: ./dist/
-          server-dir: ${{ env.DIR_PUBLIC }}
-          dry-run: ${{ inputs.dry_run || 'false' }}
-          log-level: standard
-          timeout: 60000
-
-      - name: Unggah — folder yang ditentukan
-        id: unggah3
-        if: ${{ always() && steps.periksa.outputs.folder_tersedia == 'true' }}
-        uses: SamKirkland/FTP-Deploy-Action@v4.4.0
-        with:
-          server: ${{ steps.periksa.outputs.ftp_host }}
-          username: ${{ secrets.FTP_USERNAME || vars.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD || vars.FTP_PASSWORD }}
-          protocol: ftps
-          port: 21
-          local-dir: ./dist/
-          server-dir: ${{ steps.periksa.outputs.folder_manual }}
-          dry-run: ${{ inputs.dry_run || 'false' }}
-          log-level: standard
-          timeout: 60000
-
-      - name: Pastikan salah satu unggahan berhasil
+      - name: Laporkan hasil unggah
         if: ${{ always() }}
         env:
-          HASIL1: ${{ steps.unggah1.outcome }}
-          HASIL2: ${{ steps.unggah2.outcome }}
-          HASIL3: ${{ steps.unggah3.outcome }}
+          HASIL: ${{ steps.unggah.outcome }}
+          FOLDER: ${{ steps.periksa.outputs.folder_tujuan }}
         run: |
           set -euo pipefail
-          echo "Percobaan 1 (subdomain)  : ${HASIL1:-tidak dijalankan}"
-          echo "Percobaan 2 (public_html): ${HASIL2:-tidak dijalankan}"
-          echo "Percobaan 3 (ditentukan) : ${HASIL3:-tidak dijalankan}"
+          echo "Folder tujuan : $FOLDER"
+          echo "Hasil unggah  : ${HASIL:-tidak dijalankan}"
+          echo "::notice::Unggah ke '$FOLDER' -> ${HASIL:-tidak dijalankan}"
 
-          if [ "${HASIL1:-}" = "success" ] || [ "${HASIL2:-}" = "success" ] || [ "${HASIL3:-}" = "success" ]; then
+          if [ "${HASIL:-}" = "success" ]; then
             echo "Deploy berhasil."
             exit 0
           fi
 
-          echo "::notice::Ringkasan — jalur subdomain: ${HASIL1:-tidak dijalankan}; public_html: ${HASIL2:-tidak dijalankan}; folder manual: ${HASIL3:-tidak dijalankan}"
-          echo "::error::Semua percobaan unggah gagal. Buka langkah unggahan di atas untuk melihat pesan dari server hosting, lalu jalankan ulang secara manual dengan kolom server_dir diisi (lihat docs/deploy.md bagian 2 dan 5)."
+          echo "::error::Unggahan gagal. Buka langkah 'Unggah ke Hostinger' untuk melihat pesan dari server hosting, lalu jalankan ulang secara manual dengan kolom server_dir diisi (lihat docs/deploy.md bagian 2 dan 5)."
           exit 1

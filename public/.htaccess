@@ -16,32 +16,36 @@
 #   RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 # </IfModule>
 
-# 2. Halaman utama tidak di-cache lama, supaya perubahan langsung terlihat
+# 2. Pastikan halaman kita yang dibuka di akar domain. Hostinger menaruh berkas
+#    bawaan "default.php"; tanpa baris ini halaman bawaan itu bisa menang.
+DirectoryIndex index.html
+
+# 3. Halaman utama tidak di-cache lama, supaya perubahan langsung terlihat
 #    (nama berkas CSS/JS sudah mengandung kode unik, jadi aman di-cache lama).
 <IfModule mod_headers.c>
   <FilesMatch "\.html$">
     Header set Cache-Control "public, max-age=0, must-revalidate"
   </FilesMatch>
 
-  # 3. Berkas di /assets/ namanya berubah setiap build -> boleh di-cache 1 tahun.
+  # 4. Berkas di /assets/ namanya berubah setiap build -> boleh di-cache 1 tahun.
   <FilesMatch "\.(js|css|woff2|svg|png|jpg|jpeg|webp|avif|ico)$">
     Header set Cache-Control "public, max-age=31536000, immutable"
   </FilesMatch>
 
-  # 4. Pengamanan dasar: jangan bocorkan tipe berkas, aktifkan proteksi klik-hijack.
+  # 5. Pengamanan dasar: jangan bocorkan tipe berkas, aktifkan proteksi klik-hijack.
   Header set X-Content-Type-Options "nosniff"
   Header set X-Frame-Options "SAMEORIGIN"
   Header set Referrer-Policy "strict-origin-when-cross-origin"
 </IfModule>
 
-# 5. Kompresi teks supaya halaman lebih ringan.
+# 6. Kompresi teks supaya halaman lebih ringan.
 <IfModule mod_deflate.c>
   AddOutputFilterByType DEFLATE text/html text/css text/plain text/xml \
     application/javascript application/json image/svg+xml
 </IfModule>
 
-# 6. Jangan tampilkan daftar isi folder.
+# 7. Jangan tampilkan daftar isi folder.
 Options -Indexes
 
-# 7. Halaman galat sederhana kembali ke beranda (situs satu halaman).
+# 8. Halaman galat sederhana kembali ke beranda (situs satu halaman).
 ErrorDocument 404 /index.html
