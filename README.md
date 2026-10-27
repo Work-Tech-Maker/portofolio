@@ -34,6 +34,18 @@ public/
   media/        foto, screenshot, video, CV (PDF)
 ```
 
+## Keputusan desain (PRD §14)
+
+Dijelaskan lengkap di [`DESIGN.md`](./DESIGN.md), ringkasnya:
+
+- **Tema:** Opsi A — zona terang (Akuntansi/Pajak) → zona gelap (IT & demo Kalkulator PPN)
+  → terang kembali (Tentang & Kontak), dengan gradasi 128 px dan navbar yang ikut berubah warna.
+- **Font:** Plus Jakarta Sans (judul) + Inter (isi), dari Google Fonts.
+- **Palet:** biru tua `#0A1F38` dengan aksen teal `#0F766E` dan emas `#B07C24`.
+- **Animasi:** `framer-motion`, durasi 0.18–0.5 s, dihormati `prefers-reduced-motion`.
+- **Video:** `VideoEmbed` mendukung YouTube unlisted **dan** MP4 lokal, dipilih lewat data
+  (PRD §7.3 butir 7).
+
 ## Aturan kerja
 
 - Branch fitur per pekerjaan; `main` hanya di-merge oleh pemilik proyek.

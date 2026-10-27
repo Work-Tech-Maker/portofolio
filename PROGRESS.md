@@ -2,11 +2,14 @@
 
 ## Posisi terakhir (2026-10-27)
 
-**Tahap 0 — bootstrap.** Folder proyek, `PRD.md`, `.gitignore`, `README.md` sudah ada.
+**Tahap 0 — bootstrap selesai. `DESIGN.md` ditulis, menunggu persetujuan pemilik.**
 **Belum ada kode aplikasi.**
 
-- `PRD.md` — 294 baris, 14 bagian, tersimpan verbatim dari pemilik.
-- Git init (branch `main`), belum ada remote.
+- `PRD.md` — 294 baris, 14 bagian, tersimpan verbatim (dicek `cmp`, identik byte-per-byte).
+- `DESIGN.md` — keputusan desain lengkap: Opsi A (terang → gelap → terang), palet biru tua
+  + teal/emas, Plus Jakarta Sans + Inter, `framer-motion`, `VideoEmbed` dua sumber,
+  token warna/radius/bayangan, aturan animasi, aksesibilitas.
+- Remote `origin` = `git@github.com:Work-Tech-Maker/portofolio.git` (repo kosong, akses SSH OK).
 - Data milik pemilik yang belum tersedia ditandai `[ISI: …]` di berkas data nanti
   (PRD §11). Tidak ada isi yang dikarang.
 
@@ -41,11 +44,19 @@
 - angka hasil/penghematan waktu (opsional, bagian disembunyikan bila kosong)
 - **file asli kalkulator PPN** — logika harus disalin dari situ, bukan dikarang (PRD §4.4.1)
 
-**Keputusan yang perlu disetujui:**
+**Keputusan yang sudah diambil pemilik (27 Okt 2026):**
 
-- remote Git untuk proyek ini (repo baru?) — belum ada, jadi belum bisa di-push
-- Opsi tema A (terang→gelap antar bagian) atau B (tombol ganti tema)
-- sumber video: YouTube unlisted atau MP4 lokal (terkait kuota hosting)
+- Tema **Opsi A** (terang → gelap → terang), font Plus Jakarta Sans + Inter,
+  palet biru tua + teal/emas, animasi `framer-motion`, video dua sumber.
+- Remote Git: `git@github.com:Work-Tech-Maker/portofolio.git`.
+
+## Rencana teknis yang perlu diingat saat Tahap 1
+
+- Navbar harus **berganti warna** saat melewati zona gelap (`data-zona` + `IntersectionObserver`),
+  kalau tidak tautannya tidak terbaca. Detail di `DESIGN.md` §2.
+- Token warna/radius/bayangan didaftarkan di `@theme` `src/index.css`; durasi animasi di
+  `src/config/gerak.js` — supaya tidak ada angka ajaib (PRD §7.3 butir 6).
+- `prefers-reduced-motion` wajib dihormati dan diuji (PRD §5.2).
 
 ## Catatan teknis
 
