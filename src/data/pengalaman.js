@@ -13,7 +13,7 @@ export const pengalaman = [
     id: 'akuntansi-pajak',
     peran: 'Staf Akuntansi & Pajak',
     tempat: 'Perusahaan Manufaktur',
-    periode: 'DUMMY — 20XX – sekarang',
+    periode: '20XX – sekarang',
     poin: [
       'Menyusun laporan keuangan bulanan dan tahunan',
       'Menghitung koreksi fiskal dan menyiapkan data SPT Tahunan',
@@ -24,7 +24,7 @@ export const pengalaman = [
     id: 'administrasi-keuangan',
     peran: 'Staf Administrasi Keuangan',
     tempat: 'Perusahaan Distribusi',
-    periode: 'DUMMY — 20XX – 20XX',
+    periode: '20XX – 20XX',
     poin: [
       'Mengelola kas kecil dan rekonsiliasi harian',
       'Membuat rekap penjualan dan pembelian untuk manajemen',
@@ -34,7 +34,7 @@ export const pengalaman = [
     id: 'it-support',
     peran: 'IT Support & Otomasi',
     tempat: 'Proyek lepas',
-    periode: 'DUMMY — 20XX – sekarang',
+    periode: '20XX – sekarang',
     poin: [
       'Merancang alat otomasi untuk pekerjaan administrasi berulang',
       'Instalasi dan perawatan perangkat serta jaringan kantor kecil',

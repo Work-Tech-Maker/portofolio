@@ -9,8 +9,6 @@
  * perusahaan atau pelanggan nyata.
  */
 
-import { MODE_DUMMY } from './teks.js'
-
 /* =============================================================================
    PROYEK UNGGULAN — satu studi kasus besar
    ========================================================================== */
@@ -47,7 +45,9 @@ export const proyekUnggulan = {
   // Komponen VideoEmbed menangani keduanya tanpa perlu diubah (PRD §7.3 butir 7).
   video: {
     tipe: 'youtube',
-    id: MODE_DUMMY ? 'dQw4w9WgXcQ' : '', // DUMMY: ganti dengan ID video unlisted Anda
+    // Sengaja DIBIARKAN KOSONG: jangan memakai ID video milik orang lain sebagai
+    // contoh. Selama kosong, situs menampilkan penanda rapi (PRD §11).
+    id: '',
     src: '', // dipakai bila tipe = 'mp4', contoh: '/media/demo-laporan.mp4'
     poster: '', // gambar poster, contoh: '/media/demo-poster.webp'
     judul: 'Rekaman layar: menyusun laporan dan menyiapkan angka SPT',

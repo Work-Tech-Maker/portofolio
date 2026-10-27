@@ -26,7 +26,7 @@ export default function MediaPlaceholder({
       style={{ aspectRatio: rasio }}
       className={`flex w-full flex-col items-center justify-center gap-2 rounded-tombol border border-dashed ${
         gelap
-          ? 'border-gelap-border bg-gelap-surface text-gelap-ink-3'
+          ? 'border-gelap-border bg-gelap-surface text-gelap-ink-2'
           : 'border-terang-border-kuat bg-terang-surface-2 text-terang-ink-3'
       } ${className}`}
     >

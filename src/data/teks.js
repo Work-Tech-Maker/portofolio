@@ -46,6 +46,11 @@ export const teks = {
     kontakSub: 'Mari bicara soal pekerjaan Anda.',
   },
 
+  // Hero
+  hero: {
+    fokusKerja: 'Fokus kerja',
+  },
+
   // Tombol
   tombol: {
     hubungi: 'Hubungi Saya',
@@ -83,8 +88,13 @@ export const teks = {
 
   // Catatan kecil / status
   catatan: {
-    sedangDikembangkan: 'Demo interaktif sedang disiapkan.',
+    sedangDikembangkan: 'Demo interaktif sedang disiapkan — rumusnya menunggu berkas asli.',
     galeri: 'Klik gambar untuk memperbesar.',
+    tangkapanLayar: 'Tangkapan layar',
+    videoMenyusul: 'Rekaman layar menyusul',
+    demoDiBawah: 'Demo ada di bawah',
+    periodeMenyusul: 'Periode menyusul',
+    segera: 'Segera',
   },
 
   // Footer

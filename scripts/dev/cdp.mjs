@@ -1,7 +1,9 @@
 // cdp.mjs — klien CDP kecil memakai WebSocket bawaan Node.
 // Dipakai untuk menguji & memotret UI tanpa browser tool hermes.
 import { spawn } from 'node:child_process'
-import { writeFileSync } from 'node:fs'
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 
 const CHROME =
   process.env.CHROME || '/home/hermes/.hermes/tools/chromium-1208/chrome-linux64/chrome'
@@ -9,7 +11,10 @@ const PORT = Number(process.env.CDP_PORT || 9333)
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
 
 export async function buka({ lebar = 390, tinggi = 844 } = {}) {
-  const profil = `/tmp/cdp-profile-${Date.now()}`
+  // Profil Chrome dibuat di folder sementara milik sistem lalu DIHAPUS saat tutup().
+  // Penting: /tmp di mesin ini adalah tmpfs kecil (822 MB); membiarkan profil
+  // menumpuk sempat membuatnya penuh dan menghentikan penulisan berkas.
+  const profil = mkdtempSync(join(tmpdir(), 'cdp-profil-'))
   const chrome = spawn(
     CHROME,
     [
@@ -221,6 +226,14 @@ export async function buka({ lebar = 390, tinggi = 844 } = {}) {
       /* abaikan */
     }
     chrome.kill()
+    // Tunggu Chrome benar-benar berhenti sebelum menghapus profilnya.
+    setTimeout(() => {
+      try {
+        rmSync(profil, { recursive: true, force: true })
+      } catch {
+        /* abaikan */
+      }
+    }, 800)
   }
 
   /** Kumpulan error konsol & exception halaman sejak awal. */

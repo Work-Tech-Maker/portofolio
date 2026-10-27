@@ -27,7 +27,7 @@ export default function VideoEmbed({ video }) {
   if (!adaVideo) {
     return (
       <div className="relative">
-        <MediaPlaceholder rasio="16 / 9" label="Video rekaman layar menyusul" zona="gelap" />
+        <MediaPlaceholder rasio="16 / 9" label={teks.catatan.videoMenyusul} zona="gelap" />
         {video?.judul ? (
           <p className="mt-3 text-label text-gelap-ink-2">{video.judul}</p>
         ) : null}

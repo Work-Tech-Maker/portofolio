@@ -16,7 +16,7 @@
   --color-terang-border-kuat: #c3cedf;
   --color-terang-ink: #0b1b33;
   --color-terang-ink-2: #41546e;
-  --color-terang-ink-3: #64748b; /* 4.76:1 di atas latar terang (AA) */
+  --color-terang-ink-3: #5f6e83; /* >=4.62:1 di semua permukaan zona terang (AA) */
 
   /* ---------- Zona gelap: IT, otomasi, demo ---------- */
   --color-gelap-bg: #0a1f38;
@@ -24,7 +24,7 @@
   --color-gelap-border: #1e4066;
   --color-gelap-ink: #eaf1f9;
   --color-gelap-ink-2: #a9bdd4;
-  --color-gelap-ink-3: #7b93ae;
+  --color-gelap-ink-3: #88a0ba; /* >=5.23:1 di semua permukaan zona gelap (AA) */
 
   /* ---------- Aksen (hanya dua: teal + emas) ---------- */
   --color-teal: #0f766e;
@@ -132,6 +132,28 @@ h4 {
 /* Gradasi perpindahan antar zona (DESIGN.md §2) */
 .zona-transisi {
   height: 128px;
+}
+
+/* Tekstur halus untuk zona gelap: kisi tipis 32 px supaya bidang gelap tidak
+   terasa rata, tanpa mengganggu teks. Ukurannya sengaja tidak terlihat jelas. */
+.latar-kisi {
+  background-image:
+    linear-gradient(to right, rgb(255 255 255 / 0.032) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(255 255 255 / 0.032) 1px, transparent 1px);
+  background-size: 32px 32px;
+  /* Hilangkan tekstur tepat di tepi atas/bawah agar pergantian zona tetap mulus */
+  mask-image: linear-gradient(to bottom, transparent, black 12%, black 88%, transparent);
+}
+
+/* Warna seleksi teks mengikuti aksen, bukan biru bawaan browser */
+::selection {
+  background: var(--color-teal-lembut);
+  color: var(--color-teal-tua);
+}
+
+/* Lompatan anchor tidak boleh tertutup navigasi tetap (72 px) */
+[data-jangkar] {
+  scroll-margin-top: 88px;
 }
 
 /* Hormati preferensi pengunjung: hilangkan transisi CSS apa pun */

@@ -2,9 +2,36 @@
 
 ## Posisi terakhir (27 Okt 2026)
 
-**Tahap 1 — Kerangka selesai dan teruji. Menunggu keputusan pemilik untuk lanjut ke Tahap 2.**
+**Tahap 1 (kerangka) + Tahap 2 (polesan tampilan) selesai dan teruji.**
+**Menunggu keputusan pemilik: lanjut Tahap 3 (media + kalkulator) atau kirim data asli.**
 
-Cabang: `fitur/kerangka-ui` (turunan dari `fitur/design-md`).
+Cabang: `fitur/polesan-tampilan` (turunan dari `fitur/kerangka-ui` → `fitur/design-md`).
+
+### Polesan Tahap 2 (setelah tinjauan tampilan)
+
+- **Kontras teks diperbaiki dan diperiksa angka, bukan dikira-kira:** `terang-ink-3`
+  `#64748b` → `#5f6e83` (4,62:1 di permukaan terabu), `gelap-ink-3` `#7b93ae` → `#88a0ba`
+  (5,23:1). Semua 18 pasangan warna teks/latar kini ≥ 4,5:1 (AA).
+- **Ritme jarak antar bagian:** Hero terlalu tinggi → jarak bawahnya dipangkas, bagian
+  Layanan memakai opsi `rapatAtas`. Perbaikan bug: sebelumnya `className="pt-0"` dikirim
+  ke `<section>`, padahal jarak ada di elemen dalam, sehingga tidak berefek.
+- **Anchor navbar tidak lagi menutupi judul bagian:** semua `<section>` memakai
+  `scroll-margin-top: 88px` (`data-jangkar`).
+- **CTA Hero dibetulkan:** “Hubungi Saya” kini tombol utama (terisi), “Unduh CV” sekunder —
+  selama PDF belum ada, satu-satunya aksi nyata adalah WhatsApp.
+- **Label keahlian di Hero** (“Fokus kerja”: Coretax, ACCURATE Online, Otomasi Excel,
+  IT Support) supaya bidang terbaca dalam ±10 detik (PRD §2).
+- **Zona gelap diberi tekstur kisi 32 px** yang memudar di tepi, agar bidang navy tidak rata.
+- **Daftar Fitur unggulan dua kolom di layar lebar** — kolom narasi tidak lagi jauh lebih
+  panjang daripada kolom media.
+- **Label placeholder dirapikan** (“Tangkapan layar 1–4”), label kolom teknologi dan
+  petunjuk galeri dinaikkan kontras.
+- **Kejujuran data:** ID video contoh milik orang lain dihapus dari `proyek.js`; media tanpa
+  berkas menampilkan penanda, tidak pernah gambar/video pinjaman.
+- **Perawatan lingkungan:** `/tmp` (tmpfs 822 MB) sempat PENUH karena profil Chrome sisa
+  pengujian (52 folder, ±646 MB) sampai penulisan berkas gagal. Folder itu dibersihkan, dan
+  `scripts/dev/cdp.mjs` sekarang membuat profil di folder sementara sistem **lalu
+  menghapusnya saat ditutup**.
 
 ### Yang sudah jadi
 
@@ -79,8 +106,16 @@ Data (boleh menyusul per tahap; tidak menghambat Tahap 2 dimulai):
 
 ## Catatan teknis
 
-- Dev server proyek ini dipakai di `127.0.0.1:5175` (port lain sedang dipakai proyek keuangan).
-- Pemeriksa UI memakai `scripts/dev/cdp.mjs` (Chrome mode tanpa antarmuka). Chrome di mesin ini
+- **Cara memberi link uji ke pemilik (komputer kantor):** port 8080 host ini TIDAK terbuka
+  ke internet (sudah dicoba lewat pemeriksa luar, gagal). Karena itu dipakai terowongan SSH:
+  `ssh -R 80:localhost:8080 nokey@localhost.run` → dapat alamat `https://<kode>.lhr.life`.
+  Vite perlu diizinkan menerima host terowongan: `server.allowedHosts` di `vite.config.js`
+  (diatur lewat `HOST_TEROWONGAN`, bawaan `.lhr.life,.trycloudflare.com`).
+  Alamatnya berganti setiap terowongan dibuat ulang, dan hanya hidup selama prosesnya jalan.
+- **Permanen:** unggah `dist/` ke Hostinger (`public_html` subdomain) — Tahap 5.
+- Dev server proyek ini dipakai di `127.0.0.1:5175`; pratinjau hasil build di `8080`
+  (port lain sedang dipakai proyek keuangan).
+- Pemeriksa UI memakai `scripts/dev/cdp.mjs` (Chrome tanpa antarmuka). Chrome di mesin ini
   butuh pustaka di `~/.local/chrome-libs` dan font di `~/.local/share/fonts`.
 - Proyek lama `manajemen-keuangan-indra` berdiri sendiri di folder terpisah.
 - Jangan commit berkas mentah pemilik; hanya versi akhir terkompres di `public/media/`.

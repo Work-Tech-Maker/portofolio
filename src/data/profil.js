@@ -16,6 +16,10 @@ export const profil = {
   nilaiJual:
     'Akuntansi dan pajak yang paham teknologi: saya membangun alat otomasi yang menghemat waktu kerja.',
 
+  // Empat penanda keahlian yang tampil sebagai label kecil di bawah tombol Hero.
+  // Tujuan: pengunjung paham bidangnya dalam ±10 detik (PRD §2 tujuan 1).
+  keunggulan: ['Coretax & SPT Tahunan', 'ACCURATE Online', 'Otomasi Excel', 'IT Support'],
+
   // Foto utama di Hero. Taruh berkasnya di public/media/ lalu tulis path-nya di sini.
   // Kosongkan ('') untuk memakai placeholder inisial nama — tata letak tetap rapi.
   foto: '',

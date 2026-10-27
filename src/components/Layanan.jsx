@@ -25,6 +25,7 @@ export default function Layanan() {
       zona="terang"
       judul={teks.bagian.layanan}
       sub={teks.bagian.layananSub}
+      rapatAtas
     >
       <ul className="grid gap-5 md:grid-cols-3 md:gap-6">
         {layanan.map((item, i) => {

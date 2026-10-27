@@ -49,7 +49,7 @@ export default function ProyekUnggulan() {
           <div className="flex flex-wrap items-center gap-3">
             <LabelBidang anak={p.bidang} zona="gelap" />
             {p.teknologi?.length ? (
-              <span className="text-micro text-gelap-ink-3">{p.teknologi.join(' · ')}</span>
+              <span className="text-micro text-gelap-ink-2">{p.teknologi.join(' · ')}</span>
             ) : null}
           </div>
 
@@ -77,7 +77,7 @@ export default function ProyekUnggulan() {
               <p className="mb-2 text-micro font-semibold uppercase tracking-wider text-gelap-ink-3">
                 {teks.studiKasus.fitur}
               </p>
-              <ul className="flex flex-col gap-2">
+              <ul className="grid gap-2 lg:grid-cols-2 lg:gap-x-6">
                 {p.fitur.map((f) => (
                   <li key={f} className="flex items-start gap-2 text-body text-gelap-ink-2">
                     <CircleCheck
@@ -111,7 +111,7 @@ export default function ProyekUnggulan() {
           <div className="mt-8">
             <div className="mb-3 flex items-baseline justify-between gap-3">
               <h4 className="font-judul text-[17px] font-bold text-gelap-ink">Tangkapan layar</h4>
-              <span className="text-micro text-gelap-ink-3">{teks.catatan.galeri}</span>
+              <span className="text-micro text-gelap-ink-2">{teks.catatan.galeri}</span>
             </div>
             <Galeri daftar={p.galeri} zona="gelap" />
           </div>

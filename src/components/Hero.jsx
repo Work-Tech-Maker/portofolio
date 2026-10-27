@@ -45,7 +45,7 @@ export default function Hero() {
       aria-labelledby="hero-judul"
       className="bg-terang-bg pt-24 md:pt-32"
     >
-      <div className="mx-auto grid w-full max-w-isi items-center gap-10 px-5 pb-16 md:grid-cols-[1.15fr_0.85fr] md:gap-14 md:px-8 md:pb-24">
+      <div className="mx-auto grid w-full max-w-isi items-center gap-10 px-5 pb-10 md:grid-cols-[1.15fr_0.85fr] md:gap-14 md:px-8 md:pb-14">
         {/* ---------- Teks ---------- */}
         <motion.div {...gerakTeks}>
           <motion.p
@@ -73,7 +73,7 @@ export default function Hero() {
 
           <motion.div variants={varianAnak} className="mt-8 flex flex-wrap gap-3">
             {adaTautan(profil.cv) ? (
-              <Tombol href={profil.cv} variant="utama" ukuran="lg" ikon={Download} download>
+              <Tombol href={profil.cv} variant="sekunder" ukuran="lg" ikon={Download} download>
                 {teks.nav.unduhCv}
               </Tombol>
             ) : null}
@@ -82,7 +82,7 @@ export default function Hero() {
               href={tautanWhatsApp(
                 'Halo, saya melihat portofolio Anda dan ingin berdiskusi.',
               )}
-              variant="sekunder"
+              variant="utama"
               ukuran="lg"
               denganIkonWa
             >
@@ -90,12 +90,32 @@ export default function Hero() {
             </Tombol>
           </motion.div>
 
-          {/* Catatan bantu: HANYA saat mode contoh, tidak tampil di situs publik */}
+          {/* Catatan bantu: HANYA saat mode contoh, tidak tampil di situs publik.
+              Ditaruh langsung di bawah tombol supaya jelas merujuk ke tombol itu. */}
           {MODE_DUMMY && !adaTautan(profil.cv) ? (
-            <motion.p variants={varianAnak} className="mt-4 text-micro text-terang-ink-3">
+            <motion.p variants={varianAnak} className="mt-3 text-micro text-terang-ink-3">
               Tombol “Unduh CV” akan muncul setelah berkas PDF ditambahkan.
             </motion.p>
           ) : null}
+
+          {/* Penanda keahlian: mempercepat pengunjung memahami bidangnya (PRD §2) */}
+          <motion.p
+            variants={varianAnak}
+            className="mt-7 text-micro font-semibold uppercase tracking-wider text-terang-ink-3"
+          >
+            {teks.hero.fokusKerja}
+          </motion.p>
+          <motion.ul variants={varianAnak} className="mt-2.5 flex flex-wrap gap-2">
+            {profil.keunggulan.map((k) => (
+              <li
+                key={k}
+                className="rounded-full border border-terang-border bg-terang-surface px-3 py-1.5 text-micro font-semibold text-terang-ink-2"
+              >
+                {k}
+              </li>
+            ))}
+          </motion.ul>
+
         </motion.div>
 
         {/* ---------- Foto ---------- */}
@@ -103,7 +123,7 @@ export default function Hero() {
           initial={kurangiGerak ? false : { opacity: 0, y: 16 }}
           animate={kurangiGerak ? false : { opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
-          className="relative mx-auto w-full max-w-[280px] sm:max-w-[320px] md:max-w-[360px] md:justify-self-end"
+          className="relative mx-auto w-full max-w-[260px] sm:max-w-[300px] md:max-w-[330px] md:justify-self-end"
         >
           {/* Bingkai foto: rasio 4:5 */}
           <div className="relative overflow-hidden rounded-media border border-terang-border bg-terang-surface-2">

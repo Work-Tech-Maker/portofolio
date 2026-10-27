@@ -25,7 +25,7 @@ export default function ProyekPendukung() {
       zona="gelap"
       judul={teks.bagian.proyekPendukung}
       sub={teks.bagian.proyekPendukungSub}
-      className="pt-0 md:pt-0"
+      rapatAtas
     >
       <ul className="grid gap-5 md:grid-cols-3 md:gap-6">
         {proyekPendukung.map((p, i) => (
@@ -43,7 +43,11 @@ export default function ProyekPendukung() {
                 ) : (
                   <MediaPlaceholder
                     rasio="16 / 10"
-                    label={p.media?.tipe === 'demo' ? 'Demo ada di bawah' : 'Tangkapan layar menyusul'}
+                    label={
+                      p.media?.tipe === 'demo'
+                        ? teks.catatan.demoDiBawah
+                        : `${teks.catatan.tangkapanLayar} ${i + 1}`
+                    }
                     zona="gelap"
                   />
                 )}

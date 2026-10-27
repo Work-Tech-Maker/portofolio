@@ -20,6 +20,7 @@ export default function Bagian({
   children,
   className = '',
   tanpaJudul = false,
+  rapatAtas = false,
 }) {
   const gelap = zona === 'gelap'
 
@@ -27,10 +28,20 @@ export default function Bagian({
     <section
       id={id}
       data-zona={zona}
+      data-jangkar
       aria-labelledby={judul ? `${id}-judul` : undefined}
       className={`relative ${gelap ? 'bg-gelap-bg text-gelap-ink' : 'bg-terang-bg text-terang-ink'} ${className}`}
     >
-      <div className="mx-auto w-full max-w-isi px-5 py-16 md:px-8 md:py-24">
+      {/* Tekstur kisi hanya di zona gelap, sebagai lapisan belakang (tidak menangkap klik) */}
+      {gelap ? (
+        <span aria-hidden="true" className="latar-kisi pointer-events-none absolute inset-0" />
+      ) : null}
+
+      <div
+        className={`relative mx-auto w-full max-w-isi px-5 md:px-8 ${
+          rapatAtas ? 'pb-16 pt-0 md:pb-24 md:pt-0' : 'py-16 md:py-24'
+        }`}
+      >
         {!tanpaJudul && judul ? (
           <header className="mb-10 max-w-2xl md:mb-14">
             {/* Garis emas pendek sebagai penanda judul (DESIGN.md §6) */}

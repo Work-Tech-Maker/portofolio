@@ -47,6 +47,10 @@ export default function KalkulatorPPN() {
     <Bagian id="kalkulator" zona="gelap" judul={teks.kalkulator.judul} sub={teks.kalkulator.sub}>
       <Reveal>
         <Kartu zona="gelap" hover={false} className="mx-auto max-w-3xl">
+          <p className="mb-5 inline-flex items-center gap-2 rounded-full border border-emas-terang/50 px-3 py-1 text-micro font-semibold text-emas-terang">
+            {teks.catatan.segera}
+          </p>
+
           <div className="grid gap-6 md:grid-cols-2">
             {/* ---------- Isian ---------- */}
             <div className="flex flex-col gap-4">

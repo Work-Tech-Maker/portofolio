@@ -76,7 +76,11 @@ export default function Galeri({ daftar = [], zona = 'gelap' }) {
                   className="aspect-[16/10] w-full object-cover"
                 />
               ) : (
-                <MediaPlaceholder rasio="16 / 10" label={item.alt || 'Screenshot menyusul'} zona={zona} />
+                <MediaPlaceholder
+                  rasio="16 / 10"
+                  label={`${teks.catatan.tangkapanLayar} ${i + 1}`}
+                  zona={zona}
+                />
               )}
             </button>
           </li>
@@ -128,7 +132,11 @@ export default function Galeri({ daftar = [], zona = 'gelap' }) {
               />
             ) : (
               <div className="w-full max-w-3xl">
-                <MediaPlaceholder rasio="16 / 10" label={gambar.alt || 'Screenshot menyusul'} zona={zona} />
+                <MediaPlaceholder
+                  rasio="16 / 10"
+                  label={`${teks.catatan.tangkapanLayar} ${aktif + 1} — ${gambar.alt}`}
+                  zona={zona}
+                />
               </div>
             )}
 
