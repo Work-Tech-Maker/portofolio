@@ -140,35 +140,27 @@ jobs:
           echo "Isi akar FTP: ${AKAR:-<kosong atau gagal dibaca>}"
           echo "::notice::Isi akar FTP: ${AKAR:-<kosong atau gagal dibaca>}"
 
-          for k in "${{ env.DIR_BAWAAN }}" "$FOLDER_MANUAL"; do
-            [ -n "$k" ] || continue
-            if ada "ftp://$H/$k"; then
-              echo "ADA: $k   isi: $(daftar "ftp://$H/$k")"
-              echo "::notice::Folder ADA: $k | isi: $(daftar "ftp://$H/$k")"
-            else
-              echo "TIDAK ADA: $k"
-              echo "::notice::Folder TIDAK ADA: $k"
-            fi
-          done
-
-          # Folder tujuan yang ditentukan sendiri: input manual lebih diutamakan
-          # daripada secret. Kalau keduanya kosong, workflow mencoba dua jalur
-          # bawaan. Nilai ini dipakai lewat variabel lingkungan karena context
-          # `secrets` tidak boleh dipakai di dalam `if`.
+          # Folder tujuan: input manual > secret FTP_SERVER_DIR > bawaan (akar FTP).
+          # Ditentukan SEBELUM pemeriksaan folder di bawah supaya variabelnya sudah ada.
           if [ -n "${DARI_INPUT:-}" ]; then
             FOLDER_MANUAL="$DARI_INPUT"
+            echo "Folder tujuan    : '$FOLDER_MANUAL' (dari isian manual)"
           elif [ -n "${DARI_SECRET:-}" ]; then
             FOLDER_MANUAL="$DARI_SECRET"
+            echo "Folder tujuan    : '$FOLDER_MANUAL' (dari secret FTP_SERVER_DIR)"
           else
-            FOLDER_MANUAL=""
+            FOLDER_MANUAL="${{ env.DIR_BAWAAN }}"
+            echo "Folder tujuan    : '$FOLDER_MANUAL' (akar login FTP, bawaan)"
           fi
+          echo "folder_tujuan=$FOLDER_MANUAL" >> "$GITHUB_OUTPUT"
 
-          if [ -n "$FOLDER_MANUAL" ]; then
-            echo "Folder tujuan    : '$FOLDER_MANUAL' (dari setelan manual)"
-            echo "folder_tujuan=$FOLDER_MANUAL" >> "$GITHUB_OUTPUT"
+          # Periksa folder tujuan benar-benar ada (hanya membaca).
+          if ada "ftp://$H/$FOLDER_MANUAL"; then
+            echo "Isi folder tujuan: $(daftar "ftp://$H/$FOLDER_MANUAL")"
+            echo "::notice::Folder tujuan ADA: $FOLDER_MANUAL | isi: $(daftar "ftp://$H/$FOLDER_MANUAL")"
           else
-            echo "Folder tujuan    : '${{ env.DIR_BAWAAN }}' (akar login FTP, bawaan)"
-            echo "folder_tujuan=${{ env.DIR_BAWAAN }}" >> "$GITHUB_OUTPUT"
+            echo "::warning::Folder tujuan '$FOLDER_MANUAL' tidak terbaca sebelum unggah (mungkin masih kosong)."
+            echo "::notice::Folder tujuan TIDAK terbaca: $FOLDER_MANUAL"
           fi
 
       # ---------------------------------------------------------------------
