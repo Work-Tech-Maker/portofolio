@@ -76,11 +76,11 @@ jobs:
       - name: Periksa setelan FTP
         id: periksa
         env:
-          HOST_MENTAH: ${{ secrets.FTP_SERVER }}
-          AKUN: ${{ secrets.FTP_USERNAME }}
-          SANDI: ${{ secrets.FTP_PASSWORD }}
+          HOST_MENTAH: ${{ secrets.FTP_SERVER || vars.FTP_SERVER }}
+          AKUN: ${{ secrets.FTP_USERNAME || vars.FTP_USERNAME }}
+          SANDI: ${{ secrets.FTP_PASSWORD || vars.FTP_PASSWORD }}
           DARI_INPUT: ${{ inputs.server_dir }}
-          DARI_SECRET: ${{ secrets.FTP_SERVER_DIR }}
+          DARI_SECRET: ${{ secrets.FTP_SERVER_DIR || vars.FTP_SERVER_DIR }}
         run: |
           set -euo pipefail
 
@@ -99,8 +99,13 @@ jobs:
             echo "::warning::Nilai FTP_SERVER mengandung skema atau garis miring; workflow memakai versi yang sudah dirapikan."
           fi
 
-          if getent hosts "$H" > /dev/null; then
+          # Alamat IP tidak perlu resolusi DNS (pencarian balik IP justru sering gagal).
+          if printf '%s' "$H" | grep -Eq '^[0-9]{1,3}(\.[0-9]{1,3}){3}$|:'; then
+            echo "Bentuk host      : alamat IP, pemeriksaan DNS dilewati"
+            echo "::notice::Host FTP berupa alamat IP: $H"
+          elif getent hosts "$H" > /dev/null; then
             echo "DNS              : berhasil di-resolve"
+            echo "::notice::Host FTP bisa di-resolve: $H"
           else
             echo "::error::Host FTP '$H' tidak bisa di-resolve. Periksa nilai secret FTP_SERVER (isi alamat saja, tanpa ftp://)."
             exit 1
@@ -108,10 +113,39 @@ jobs:
 
           if timeout 15 bash -c "</dev/tcp/$H/21" 2>/dev/null; then
             echo "Port 21          : terbuka"
+            echo "::notice::Port 21 terbuka di $H"
           else
             echo "::error::Port 21 di '$H' tidak bisa dihubungi dari GitHub Actions. Aktifkan FTP di hPanel atau periksa firewall hosting."
             exit 1
           fi
+
+          # --- Diagnosis ringan: hanya membaca, tidak mengubah apa pun ---
+          # (-k dipakai supaya sertifikat FTPS tidak menggagalkan pemeriksaan;
+          #  unggahan sebenarnya memakai pengaturan aksi itu sendiri)
+          # Daftar isi folder (hanya stdout; pesan galat dibuang agar tidak dikira isi).
+          daftar() {
+            curl -sS -k --connect-timeout 15 --ssl-reqd --ftp-pasv \
+              --user "$AKUN:$SANDI" --list-only "$1" 2>/dev/null | head -40 | tr '\n' ' '
+          }
+          # Uji keberadaan folder lewat kode keluar curl (550 = tidak ada).
+          ada() {
+            curl -sS -k --connect-timeout 15 --ssl-reqd --ftp-pasv \
+              --user "$AKUN:$SANDI" --list-only "$1" > /dev/null 2>&1
+          }
+
+          AKAR="$(daftar "ftp://$H/")"
+          echo "Isi akar FTP: ${AKAR:-<kosong atau gagal dibaca>}"
+          echo "::notice::Isi akar FTP: ${AKAR:-<kosong atau gagal dibaca>}"
+
+          for k in "${{ env.DIR_SUBDOMAIN }}" "${{ env.DIR_PUBLIC }}"; do
+            if ada "ftp://$H/$k"; then
+              echo "ADA: $k   isi: $(daftar "ftp://$H/$k")"
+              echo "::notice::Folder ADA: $k"
+            else
+              echo "TIDAK ADA: $k"
+              echo "::notice::Folder TIDAK ADA: $k"
+            fi
+          done
 
           # Folder tujuan yang ditentukan sendiri: input manual lebih diutamakan
           # daripada secret. Kalau keduanya kosong, workflow mencoba dua jalur
@@ -147,8 +181,8 @@ jobs:
         uses: SamKirkland/FTP-Deploy-Action@v4.4.0
         with:
           server: ${{ steps.periksa.outputs.ftp_host }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
+          username: ${{ secrets.FTP_USERNAME || vars.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD || vars.FTP_PASSWORD }}
           protocol: ftps
           port: 21
           local-dir: ./dist/
@@ -164,8 +198,8 @@ jobs:
         uses: SamKirkland/FTP-Deploy-Action@v4.4.0
         with:
           server: ${{ steps.periksa.outputs.ftp_host }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
+          username: ${{ secrets.FTP_USERNAME || vars.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD || vars.FTP_PASSWORD }}
           protocol: ftps
           port: 21
           local-dir: ./dist/
@@ -180,8 +214,8 @@ jobs:
         uses: SamKirkland/FTP-Deploy-Action@v4.4.0
         with:
           server: ${{ steps.periksa.outputs.ftp_host }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
+          username: ${{ secrets.FTP_USERNAME || vars.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD || vars.FTP_PASSWORD }}
           protocol: ftps
           port: 21
           local-dir: ./dist/
@@ -207,5 +241,6 @@ jobs:
             exit 0
           fi
 
+          echo "::notice::Ringkasan — jalur subdomain: ${HASIL1:-tidak dijalankan}; public_html: ${HASIL2:-tidak dijalankan}; folder manual: ${HASIL3:-tidak dijalankan}"
           echo "::error::Semua percobaan unggah gagal. Buka langkah unggahan di atas untuk melihat pesan dari server hosting, lalu jalankan ulang secara manual dengan kolom server_dir diisi (lihat docs/deploy.md bagian 2 dan 5)."
           exit 1
