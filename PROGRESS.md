@@ -33,6 +33,23 @@ Cabang: `fitur/polesan-tampilan` (turunan dari `fitur/kerangka-ui` → `fitur/de
   `scripts/dev/cdp.mjs` sekarang membuat profil di folder sementara sistem **lalu
   menghapusnya saat ditutup**.
 
+### Deploy otomatis ke Hostinger (disiapkan 27 Okt 2026)
+
+- `.github/workflows/deploy.yml` — push ke `main` → `npm ci` → `lint` → `build` →
+  verifikasi hasil build → unggah **hanya `dist/`** lewat FTPS (aksi resmi Hostinger-aware:
+  `SamKirkland/FTP-Deploy-Action@v4.4.0`, `protocol: ftps`, port 21).
+- Gerbang mutu: lint gagal = deploy dibatalkan. Verifikasi menolak unggah bila
+  `dist/index.html` atau bundel JS tidak ada, atau ada berkas rahasia di `dist/`.
+- Ada tombol **Run workflow** dengan opsi `dry_run` (lihat rencana perubahan tanpa
+  mengunggah) dan `server_dir` (menimpa folder tujuan) — supaya percobaan pertama aman.
+- `public/.htaccess` ikut terunggah: paksa HTTPS, cache 1 tahun untuk `assets/`,
+  tanpa cache untuk `index.html`, kompresi, header keamanan, 404 → beranda.
+- `docs/deploy.md` — panduan lengkap: nama 3 secret, cara memastikan `server-dir`
+  (dua kemungkinan struktur Hostinger), langkah dry run, dan tabel penanganan galat.
+
+**Yang ditunggu dari pemilik:** subdomain `indragunawan.luckywater.web.id` dibuat di
+hPanel, dan nilai `server-dir` yang benar (atau secret `FTP_SERVER_DIR`).
+
 ### Yang sudah jadi
 
 Seluruh halaman bisa dibuka dan digulir dari atas ke bawah, responsif di HP, tablet,

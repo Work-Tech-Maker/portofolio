@@ -1,0 +1,86 @@
+name: Deploy ke Hostinger (FTPS)
+
+# Kapan berjalan:
+#  1. otomatis setiap ada push ke branch main (setelah PR di-merge),
+#  2. manual dari tab Actions (berguna untuk uji "dry run" sebelum benar-benar mengunggah).
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run — hanya menampilkan rencana perubahan, tidak mengunggah'
+        type: choice
+        options: ['false', 'true']
+        default: 'false'
+      server_dir:
+        description: 'Folder tujuan di Hostinger (kosongkan untuk memakai default)'
+        type: string
+        required: false
+
+# Satu deploy pada satu waktu; push baru membatalkan deploy yang belum selesai.
+concurrency:
+  group: deploy-hostinger
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Bangun & unggah
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Ambil kode terbaru
+        uses: actions/checkout@v7
+
+      - name: Siapkan Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Pasang dependensi
+        run: npm ci
+
+      # Gerbang mutu: kalau lint gagal, deploy dibatalkan.
+      - name: Periksa kode (lint)
+        run: npm run lint
+
+      - name: Bangun situs
+        run: npm run build
+
+      # Pengaman: pastikan hasil build memang ada dan tidak membawa berkas rahasia.
+      - name: Verifikasi hasil build
+        run: |
+          set -e
+          echo "== Isi dist =="
+          find dist -type f | sort
+          test -f dist/index.html || { echo "GAGAL: dist/index.html tidak ada"; exit 1; }
+          grep -q '<title>' dist/index.html || { echo "GAGAL: index.html tanpa <title>"; exit 1; }
+          test -n "$(find dist/assets -name '*.js' -print -quit)" || { echo "GAGAL: bundel JS tidak ditemukan"; exit 1; }
+          if find dist -name '.env*' -o -name '*.pem' -o -name 'config.php' | grep -q .; then
+            echo "GAGAL: ada berkas rahasia di dist"; exit 1;
+          fi
+          echo "OK: hasil build lengkap dan bersih"
+
+      # Yang diunggah HANYA isi dist/ (bukan seluruh repo). Tanpa local-dir,
+      # yang terunggah adalah kode sumber dan situs tidak akan jalan.
+      - name: Unggah ke Hostinger
+        uses: SamKirkland/FTP-Deploy-Action@v4.4.0
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          protocol: ftps
+          port: 21
+          local-dir: ./dist/
+          # Default: public_html/ (dipakai bila FTP login langsung masuk ke folder domain).
+          # Untuk subdomain di Hostinger biasanya perlu: domains/<domain>/public_html/
+          # Ubah lewat secret FTP_SERVER_DIR atau input server_dir saat menjalankan manual.
+          server-dir: ${{ inputs.server_dir || secrets.FTP_SERVER_DIR || 'public_html/' }}
+          dry-run: ${{ inputs.dry_run || 'false' }}
+          log-level: standard
+          timeout: 60000

@@ -49,6 +49,19 @@ situs menampilkan kotak penanda yang rapi — tata letak tidak rusak.
 > **Penting sebelum publikasi:** ubah `MODE_DUMMY` di `src/data/teks.js` menjadi
 > `false` supaya tautan dan angka contoh tidak tampil (PRD §10 dan §11).
 
+## Mengunggah ke hosting (otomatis)
+
+Setiap push ke branch `main` otomatis membangun dan mengunggah situs ke Hostinger
+lewat GitHub Actions. Panduan lengkap (nama secret, folder tujuan, dry run,
+penanganan galat) ada di [`docs/deploy.md`](./docs/deploy.md).
+
+Untuk mencoba hasil build di komputer sendiri:
+
+```bash
+npm run build
+npm run preview     # membuka hasil build, bukan mode pengembangan
+```
+
 ## Memeriksa tampilan
 
 ```bash
