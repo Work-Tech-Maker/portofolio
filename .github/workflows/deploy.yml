@@ -14,7 +14,7 @@ on:
         options: ['false', 'true']
         default: 'false'
       server_dir:
-        description: 'Folder tujuan di Hostinger (kosongkan untuk memakai default)'
+        description: 'Folder tujuan di Hostinger (kosongkan = dicoba otomatis)'
         type: string
         required: false
 
@@ -26,11 +26,16 @@ concurrency:
 permissions:
   contents: read
 
+env:
+  # Dua kemungkinan struktur hosting Hostinger. Yang ada di server akan dipakai.
+  DIR_SUBDOMAIN: domains/indragunawan.luckywater.web.id/public_html/
+  DIR_PUBLIC: public_html/
+
 jobs:
   deploy:
     name: Bangun & unggah
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
 
     steps:
       - name: Ambil kode terbaru
@@ -58,78 +63,149 @@ jobs:
           set -e
           echo "== Isi dist =="
           find dist -type f | sort
-          test -f dist/index.html || { echo "GAGAL: dist/index.html tidak ada"; exit 1; }
-          grep -q '<title>' dist/index.html || { echo "GAGAL: index.html tanpa <title>"; exit 1; }
-          test -n "$(find dist/assets -name '*.js' -print -quit)" || { echo "GAGAL: bundel JS tidak ditemukan"; exit 1; }
+          test -f dist/index.html || { echo "::error::dist/index.html tidak ada"; exit 1; }
+          grep -q '<title>' dist/index.html || { echo "::error::index.html tanpa <title>"; exit 1; }
+          test -n "$(find dist/assets -name '*.js' -print -quit)" || { echo "::error::bundel JS tidak ditemukan"; exit 1; }
           if find dist -name '.env*' -o -name '*.pem' -o -name 'config.php' | grep -q .; then
-            echo "GAGAL: ada berkas rahasia di dist"; exit 1;
+            echo "::error::ada berkas rahasia di dist"; exit 1;
           fi
           echo "OK: hasil build lengkap dan bersih"
 
-      # Folder tujuan berbeda-beda antarpaket hosting:
-      #   - bila login FTP masuk ke akar akun  -> domains/<domain>/public_html/
-      #   - bila login FTP langsung ke domain   -> public_html/
-      # Langkah ini MEMERIKSA satu per satu lewat FTP (hanya membaca daftar folder,
-      # tidak menulis apa pun) lalu memilih yang benar-benar ada. Urutan prioritas:
-      # input manual > secret FTP_SERVER_DIR > hasil deteksi.
-      - name: Tentukan folder tujuan di hosting
-        id: tujuan
+      # Periksa setelan FTP sebelum menyentuh server. Isi rahasia TIDAK dicetak,
+      # hanya panjangnya. Nilai host dirapikan (buang spasi/skema/garis miring).
+      - name: Periksa setelan FTP
+        id: periksa
         env:
-          HOST: ${{ secrets.FTP_SERVER }}
+          HOST_MENTAH: ${{ secrets.FTP_SERVER }}
           AKUN: ${{ secrets.FTP_USERNAME }}
           SANDI: ${{ secrets.FTP_PASSWORD }}
           DARI_INPUT: ${{ inputs.server_dir }}
           DARI_SECRET: ${{ secrets.FTP_SERVER_DIR }}
         run: |
-          set -uo pipefail
+          set -euo pipefail
 
-          pilih() {
-            echo "server_dir=$1" >> "$GITHUB_OUTPUT"
-            echo "== Folder tujuan dipakai: $1 =="
-          }
-
-          if [ -n "${DARI_INPUT:-}" ]; then pilih "$DARI_INPUT"; exit 0; fi
-          if [ -n "${DARI_SECRET:-}" ]; then pilih "$DARI_SECRET"; exit 0; fi
-
-          if [ -z "${HOST:-}" ] || [ -z "${AKUN:-}" ] || [ -z "${SANDI:-}" ]; then
-            echo "::error::Secret FTP_SERVER / FTP_USERNAME / FTP_PASSWORD belum lengkap."
+          if [ -z "${HOST_MENTAH:-}" ] || [ -z "${AKUN:-}" ] || [ -z "${SANDI:-}" ]; then
+            echo "::error::Secret FTP_SERVER / FTP_USERNAME / FTP_PASSWORD belum lengkap. Isi di Settings > Secrets and variables > Actions."
             exit 1
           fi
 
-          echo "== Isi akar FTP (untuk diagnosis) =="
-          curl -sS --connect-timeout 20 --ssl-reqd --ftp-pasv \
-            --user "$AKUN:$SANDI" --list-only "ftp://$HOST/" || true
+          H="$(printf '%s' "$HOST_MENTAH" | tr -d '[:space:]' | sed -e 's#^[a-zA-Z][a-zA-Z0-9+.-]*://##' -e 's#/*$##')"
+          echo "Host FTP dipakai : '$H'"
+          echo "Nama pengguna    : '$AKUN'"
+          echo "Panjang sandi    : ${#SANDI} karakter (isi tidak dicetak)"
+          echo "ftp_host=$H" >> "$GITHUB_OUTPUT"
 
-          KANDIDAT=(
-            "domains/indragunawan.luckywater.web.id/public_html/"
-            "public_html/"
-          )
+          if [ "$H" != "$(printf '%s' "$HOST_MENTAH" | tr -d '[:space:]')" ]; then
+            echo "::warning::Nilai FTP_SERVER mengandung skema atau garis miring; workflow memakai versi yang sudah dirapikan."
+          fi
 
-          for k in "${KANDIDAT[@]}"; do
-            if curl -sS --connect-timeout 20 --ssl-reqd --ftp-pasv \
-                 --user "$AKUN:$SANDI" --list-only "ftp://$HOST/$k" > /dev/null; then
-              echo "Ditemukan: $k"
-              pilih "$k"
-              exit 0
-            fi
-            echo "Tidak ditemukan: $k"
-          done
+          if getent hosts "$H" > /dev/null; then
+            echo "DNS              : berhasil di-resolve"
+          else
+            echo "::error::Host FTP '$H' tidak bisa di-resolve. Periksa nilai secret FTP_SERVER (isi alamat saja, tanpa ftp://)."
+            exit 1
+          fi
 
-          echo "::error::Folder tujuan tidak ditemukan otomatis. Jalankan workflow manual (Run workflow) dengan kolom server_dir diisi path dari File Manager hPanel. Lihat docs/deploy.md bagian 2."
-          exit 1
+          if timeout 15 bash -c "</dev/tcp/$H/21" 2>/dev/null; then
+            echo "Port 21          : terbuka"
+          else
+            echo "::error::Port 21 di '$H' tidak bisa dihubungi dari GitHub Actions. Aktifkan FTP di hPanel atau periksa firewall hosting."
+            exit 1
+          fi
 
-      # Yang diunggah HANYA isi dist/ (bukan seluruh repo). Tanpa local-dir,
-      # yang terunggah adalah kode sumber dan situs tidak akan jalan.
-      - name: Unggah ke Hostinger
+          # Folder tujuan yang ditentukan sendiri: input manual lebih diutamakan
+          # daripada secret. Kalau keduanya kosong, workflow mencoba dua jalur
+          # bawaan. Nilai ini dipakai lewat variabel lingkungan karena context
+          # `secrets` tidak boleh dipakai di dalam `if`.
+          if [ -n "${DARI_INPUT:-}" ]; then
+            FOLDER_MANUAL="$DARI_INPUT"
+          elif [ -n "${DARI_SECRET:-}" ]; then
+            FOLDER_MANUAL="$DARI_SECRET"
+          else
+            FOLDER_MANUAL=""
+          fi
+
+          if [ -n "$FOLDER_MANUAL" ]; then
+            echo "Folder manual    : '$FOLDER_MANUAL' (dipakai, jalur bawaan tidak dicoba)"
+            echo "folder_tersedia=true" >> "$GITHUB_OUTPUT"
+            echo "folder_manual=$FOLDER_MANUAL" >> "$GITHUB_OUTPUT"
+          else
+            echo "Folder manual    : tidak diisi, workflow mencoba dua jalur bawaan"
+            echo "folder_tersedia=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      # ---------------------------------------------------------------------
+      # Unggah. Yang dikirim HANYA isi dist/ (bukan seluruh repo).
+      # Karena struktur folder bisa berbeda, ada dua jalur percobaan berurutan;
+      # kalau kolom server_dir (atau secret FTP_SERVER_DIR) diisi, hanya folder
+      # itu yang dipakai.
+      # ---------------------------------------------------------------------
+      - name: Unggah — jalur subdomain
+        id: unggah1
+        if: ${{ steps.periksa.outputs.folder_tersedia != 'true' }}
+        continue-on-error: true
         uses: SamKirkland/FTP-Deploy-Action@v4.4.0
         with:
-          server: ${{ secrets.FTP_SERVER }}
+          server: ${{ steps.periksa.outputs.ftp_host }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
           protocol: ftps
           port: 21
           local-dir: ./dist/
-          server-dir: ${{ steps.tujuan.outputs.server_dir }}
+          server-dir: ${{ env.DIR_SUBDOMAIN }}
           dry-run: ${{ inputs.dry_run || 'false' }}
           log-level: standard
           timeout: 60000
+
+      - name: Unggah — jalur public_html
+        id: unggah2
+        if: ${{ always() && steps.periksa.outputs.folder_tersedia != 'true' && steps.unggah1.outcome == 'failure' }}
+        continue-on-error: true
+        uses: SamKirkland/FTP-Deploy-Action@v4.4.0
+        with:
+          server: ${{ steps.periksa.outputs.ftp_host }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          protocol: ftps
+          port: 21
+          local-dir: ./dist/
+          server-dir: ${{ env.DIR_PUBLIC }}
+          dry-run: ${{ inputs.dry_run || 'false' }}
+          log-level: standard
+          timeout: 60000
+
+      - name: Unggah — folder yang ditentukan
+        id: unggah3
+        if: ${{ always() && steps.periksa.outputs.folder_tersedia == 'true' }}
+        uses: SamKirkland/FTP-Deploy-Action@v4.4.0
+        with:
+          server: ${{ steps.periksa.outputs.ftp_host }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          protocol: ftps
+          port: 21
+          local-dir: ./dist/
+          server-dir: ${{ steps.periksa.outputs.folder_manual }}
+          dry-run: ${{ inputs.dry_run || 'false' }}
+          log-level: standard
+          timeout: 60000
+
+      - name: Pastikan salah satu unggahan berhasil
+        if: ${{ always() }}
+        env:
+          HASIL1: ${{ steps.unggah1.outcome }}
+          HASIL2: ${{ steps.unggah2.outcome }}
+          HASIL3: ${{ steps.unggah3.outcome }}
+        run: |
+          set -euo pipefail
+          echo "Percobaan 1 (subdomain)  : ${HASIL1:-tidak dijalankan}"
+          echo "Percobaan 2 (public_html): ${HASIL2:-tidak dijalankan}"
+          echo "Percobaan 3 (ditentukan) : ${HASIL3:-tidak dijalankan}"
+
+          if [ "${HASIL1:-}" = "success" ] || [ "${HASIL2:-}" = "success" ] || [ "${HASIL3:-}" = "success" ]; then
+            echo "Deploy berhasil."
+            exit 0
+          fi
+
+          echo "::error::Semua percobaan unggah gagal. Buka langkah unggahan di atas untuk melihat pesan dari server hosting, lalu jalankan ulang secara manual dengan kolom server_dir diisi (lihat docs/deploy.md bagian 2 dan 5)."
+          exit 1

@@ -45,9 +45,10 @@ Alamat FTP Hostinger bisa masuk ke salah satu dari dua tempat:
    Folder subdomain ada di `domains/<domain>/public_html/`, jadi folder tujuannya:
    `domains/indragunawan.luckywater.web.id/public_html/`
 
-Alur kerja memeriksa keduanya otomatis dan memakai yang ada. Bila ingin memaksa
+Alur kerja mencoba keduanya berurutan dan memakai yang berhasil. Bila ingin memaksa
 satu nilai, isi secret **`FTP_SERVER_DIR`**, atau isi kolom `server_dir` saat
-menjalankan workflow manual.
+menjalankan workflow manual — kalau salah satu diisi, hanya folder itu yang dipakai
+(tidak ada percobaan kedua).
 
 Cara memastikan: buka File Manager hPanel, lihat path lengkap folder subdomain
 (biasanya ditampilkan di bagian atas berkas). Salin bagian setelah `/home/<user>/`.
@@ -58,9 +59,11 @@ akan gagal dengan pesan `550 No such directory`.
 
 ## 3. Uji tanpa mengunggah (dry run) — cara klik dari browser
 
-Alur kerja ini mencari folder tujuan **sendiri**: ia mencoba `domains/<domain>/public_html/`
-lalu `public_html/` lewat FTP, dan memilih yang benar-benar ada. Jadi pada umumnya
-tidak perlu mengisi apa pun.
+Alur kerja ini mencari folder tujuan **sendiri**: ia mencoba mengunggah ke
+`domains/<domain>/public_html/` dulu; kalau folder itu tidak ada, otomatis mencoba
+`public_html/`. Jadi pada umumnya tidak perlu mengisi apa pun. Halaman itu juga
+memeriksa setelan FTP lebih dulu (host bisa di-resolve, port 21 terbuka) dan
+mencetak hasilnya — isi sandi tidak pernah ditampilkan.
 
 1. Buka `https://github.com/Work-Tech-Maker/portofolio/actions`
 2. Di kiri, klik **Deploy ke Hostinger (FTPS)**.
@@ -89,7 +92,8 @@ dan lakukan hard-refresh (Ctrl+Shift+R) karena `index.html` sengaja tidak di-cac
 |---|---|---|
 | `530 Login incorrect` | username/password salah, atau IP diblokir | buat ulang akun FTP di hPanel, perbarui secret |
 | `550 No such directory` | `server-dir` salah atau subdomain belum dibuat | perbaiki `FTP_SERVER_DIR`, buat subdomain dulu |
-| `ECONNREFUSED` / timeout | server memblokir FTPS pada port 21 | coba `port: 990` dengan `protocol: ftps-legacy`, atau aktifkan FTP di hPanel |
+| `Port 21 ... tidak bisa dihubungi` | FTP belum aktif di hPanel atau diblokir firewall hosting | aktifkan FTP di hPanel; bila tetap gagal coba `port: 990` + `protocol: ftps-legacy` |
+| `530 Login incorrect` | sandi salah atau akun FTP dikunci | buat ulang akun FTP, perbarui secret |
 | Situs tampil daftar folder | `index.html` tidak terunggah ke folder yang benar | cek `server-dir`, lihat log "Isi dist" pada langkah verifikasi |
 | Halaman blank, aset 404 | `base` di `vite.config.js` bukan `/` | pastikan situs dipasang di **akar** subdomain, bukan subfolder |
 | Situs tidak mau dibuka (redirect terus) | SSL subdomain belum aktif sementara `.htaccess` memaksa HTTPS | aktifkan SSL di hPanel, atau matikan sementara blok nomor 1 di `public/.htaccess` |
